@@ -61,9 +61,9 @@ hold off;
 % ��������ͳ��ע��
 
 text(0.3, 0.7, sprintf('Min: %.1f\nQ1: %.1f\nMed: %.1f\nQ3: %.1f\nMax: %.1f', stats1), ...
-    'Units', 'normalized', 'FontSize', 10, 'BackgroundColor', [1 1 1 0.7]);
+    'Units', 'normalized', 'FontSize', 10, 'BackgroundColor', [1 1 1]);
 text(0.75, 0.78, sprintf('Min: %.1f\nQ1: %.1f\nMed: %.1f\nQ3: %.1f\nMax: %.1f', stats2), ...
-    'Units', 'normalized', 'FontSize', 10, 'BackgroundColor', [1 1 1 0.7]);
+    'Units', 'normalized', 'FontSize', 10, 'BackgroundColor', [1 1 1]);
 
 % ===== �Ҳࣺ�����߽߱�����ηֲ�ͼ + ������ =====
 subplot(1, 2, 2);
@@ -73,25 +73,54 @@ all_data = [data1; data2];
 bin_edges = linspace(min(all_data), max(all_data), 35);
 
 % ���Ƶ�һ�����ݵ�ֱ��ͼ�������߽߱磩
-histogram(data1, bin_edges, ...
-          'FaceColor', [0.8 0.2 0.2], ...
-          'EdgeColor', [0.5 0 0], ... % ���ɫ���߽߱�
-          'FaceAlpha', 0.7, ...
-          'LineWidth', 1.0, ...      % �߽��߿�
-          'Normalization', 'pdf');
+if exist('histogram', 'file')
+    histogram(data1, bin_edges, ...
+              'FaceColor', [0.8 0.2 0.2], ...
+              'EdgeColor', [0.5 0 0], ... % ���ɫ���߽߱�
+              'FaceAlpha', 0.7, ...
+              'LineWidth', 1.0, ...      % �߽��߿�
+              'Normalization', 'pdf');
+else
+    [counts1, centers1] = hist(data1, bin_edges);
+    bin_width1 = centers1(2) - centers1(1);
+    counts1 = counts1 / (sum(counts1) * bin_width1);
+    bar(centers1, counts1, 1, ...
+        'FaceColor', [0.8 0.2 0.2], ...
+        'EdgeColor', [0.5 0 0], ...
+        'LineWidth', 1.0);
+end
 hold on;
 
 % ���Ƶڶ������ݵ�ֱ��ͼ�������߽߱磩
-histogram(data2, bin_edges, ...
-          'FaceColor', [0.2 0.4 0.8], ...
-          'EdgeColor', [0 0 0.5], ... % ����ɫ���߽߱�
-          'FaceAlpha', 0.7, ...
-          'LineWidth', 1.0, ...      % �߽��߿�
-          'Normalization', 'pdf');
+if exist('histogram', 'file')
+    histogram(data2, bin_edges, ...
+              'FaceColor', [0.2 0.4 0.8], ...
+              'EdgeColor', [0 0 0.5], ... % ����ɫ���߽߱�
+              'FaceAlpha', 0.7, ...
+              'LineWidth', 1.0, ...      % �߽��߿�
+              'Normalization', 'pdf');
+else
+    [counts2, centers2] = hist(data2, bin_edges);
+    bin_width2 = centers2(2) - centers2(1);
+    counts2 = counts2 / (sum(counts2) * bin_width2);
+    bar(centers2, counts2, 1, ...
+        'FaceColor', [0.2 0.4 0.8], ...
+        'EdgeColor', [0 0 0.5], ...
+        'LineWidth', 1.0);
+end
 
 % ���Ӻ��ܶȹ�������
-[f1, xi1] = ksdensity(data1);
-[f2, xi2] = ksdensity(data2);
+if exist('ksdensity', 'file')
+    [f1, xi1] = ksdensity(data1);
+    [f2, xi2] = ksdensity(data2);
+else
+    [f1, xi1] = hist(data1, bin_edges);
+    [f2, xi2] = hist(data2, bin_edges);
+    dx1 = xi1(2) - xi1(1);
+    dx2 = xi2(2) - xi2(1);
+    f1 = f1 / (sum(f1) * dx1);
+    f2 = f2 / (sum(f2) * dx2);
+end
 plot(xi1, f1, 'Color', [0.6 0 0], 'LineWidth', 2.5);
 plot(xi2, f2, 'Color', [0 0.2 0.6], 'LineWidth', 2.5);
 
@@ -109,4 +138,13 @@ set(gca, 'FontSize', 9, 'GridAlpha', 0.3);
 
 
 % ��������
-sgtitle('多目标解集的方案 1 与单目标调度方案对比（加2170后）', 'FontSize', 14, 'FontWeight', 'bold');
+if exist('sgtitle', 'file')
+    sgtitle('多目标解集的方案 1 与单目标调度方案对比（加2170后）', 'FontSize', 14, 'FontWeight', 'bold');
+else
+    annotation('textbox', [0 0.95 1 0.05], ...
+        'String', '多目标解集的方案 1 与单目标调度方案对比（加2170后）', ...
+        'EdgeColor', 'none', ...
+        'HorizontalAlignment', 'center', ...
+        'FontSize', 14, ...
+        'FontWeight', 'bold');
+end
