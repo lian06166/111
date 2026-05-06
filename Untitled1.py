@@ -10,6 +10,12 @@ try:
 except Exception:
     gaussian_kde = None
 
+MAKESPAN_OFFSET = 2170  # Same preprocessing offset as MATLAB script
+MEDIAN_OFFSET_DATA1 = 0.6  # Keep MATLAB annotation display adjustment
+MEDIAN_OFFSET_DATA2 = 1.0  # Keep MATLAB annotation display adjustment
+SMOOTHING_KERNEL = np.array([1, 4, 6, 4, 1], dtype=float)
+SMOOTHING_KERNEL /= SMOOTHING_KERNEL.sum()
+
 
 def extract_data_from_matlab_file(matlab_file: Path, var_name: str) -> np.ndarray:
     text = matlab_file.read_text(encoding="utf-8", errors="ignore")
@@ -31,9 +37,7 @@ def kde_or_hist_line(data: np.ndarray, bins: np.ndarray):
 
     counts, edges = np.histogram(data, bins=bins, density=True)
     centers = (edges[:-1] + edges[1:]) / 2
-    kernel = np.array([1, 4, 6, 4, 1], dtype=float)  # 5-point binomial smoothing kernel (Gaussian-like fallback)
-    kernel /= kernel.sum()
-    smooth = np.convolve(counts, kernel, mode="same")
+    smooth = np.convolve(counts, SMOOTHING_KERNEL, mode="same")  # 5-point binomial smoothing kernel (Gaussian-like fallback)
     return centers, smooth
 
 
@@ -41,8 +45,8 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     matlab_file = base_dir / "Untitled1.m"
 
-    data1 = extract_data_from_matlab_file(matlab_file, "data1") + 2170
-    data2 = extract_data_from_matlab_file(matlab_file, "data2") + 2170
+    data1 = extract_data_from_matlab_file(matlab_file, "data1") + MAKESPAN_OFFSET
+    data2 = extract_data_from_matlab_file(matlab_file, "data2") + MAKESPAN_OFFSET
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5), dpi=100)
 
@@ -66,14 +70,14 @@ def main() -> None:
     stats1 = [
         np.min(data1),
         np.quantile(data1, 0.25),
-        np.median(data1) + 0.6,  # Keep MATLAB's display offset used in annotation
+        np.median(data1) + MEDIAN_OFFSET_DATA1,
         np.quantile(data1, 0.75),
         np.max(data1),
     ]
     stats2 = [
         np.min(data2),
         np.quantile(data2, 0.25),
-        np.median(data2) + 1,  # Keep MATLAB's display offset used in annotation
+        np.median(data2) + MEDIAN_OFFSET_DATA2,
         np.quantile(data2, 0.75),
         np.max(data2),
     ]
