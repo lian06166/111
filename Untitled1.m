@@ -73,7 +73,7 @@ all_data = [data1; data2];
 bin_edges = linspace(min(all_data), max(all_data), 35);
 
 % ���Ƶ�һ�����ݵ�ֱ��ͼ�������߽߱磩
-if exist('histogram', 'file')
+if exist('histogram', 'builtin') || exist('histogram', 'file')
     histogram(data1, bin_edges, ...
               'FaceColor', [0.8 0.2 0.2], ...
               'EdgeColor', [0.5 0 0], ... % ���ɫ���߽߱�
@@ -92,7 +92,7 @@ end
 hold on;
 
 % ���Ƶڶ������ݵ�ֱ��ͼ�������߽߱磩
-if exist('histogram', 'file')
+if exist('histogram', 'builtin') || exist('histogram', 'file')
     histogram(data2, bin_edges, ...
               'FaceColor', [0.2 0.4 0.8], ...
               'EdgeColor', [0 0 0.5], ... % ����ɫ���߽߱�
@@ -110,7 +110,7 @@ else
 end
 
 % ���Ӻ��ܶȹ�������
-if exist('ksdensity', 'file')
+if exist('ksdensity', 'builtin') || exist('ksdensity', 'file')
     [f1, xi1] = ksdensity(data1);
     [f2, xi2] = ksdensity(data2);
 else
@@ -142,7 +142,7 @@ set(gca, 'FontSize', 9, 'GridAlpha', 0.3);
 
 
 % ��������
-if exist('sgtitle', 'file')
+if exist('sgtitle', 'builtin') || exist('sgtitle', 'file')
     sgtitle('多目标解集的方案 1 与单目标调度方案对比（加2170后）', 'FontSize', 14, 'FontWeight', 'bold');
 else
     annotation('textbox', [0 0.95 1 0.05], ...
