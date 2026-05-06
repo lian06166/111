@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 try:
     from scipy.stats import gaussian_kde
-except Exception:
+except ImportError:
     gaussian_kde = None
 
 MAKESPAN_OFFSET = 2170  # Same preprocessing offset as MATLAB script
@@ -15,6 +15,8 @@ MEDIAN_OFFSET_DATA1 = 0.6  # Keep MATLAB annotation display adjustment
 MEDIAN_OFFSET_DATA2 = 1.0  # Keep MATLAB annotation display adjustment
 SMOOTHING_KERNEL = np.array([1, 4, 6, 4, 1], dtype=float)
 SMOOTHING_KERNEL /= SMOOTHING_KERNEL.sum()
+SCHEDULE1_LABEL = "Schedule 1"  # Keep labels aligned with the provided MATLAB snippet
+SCHEDULE2_LABEL = "SOS"
 
 
 def extract_data_from_matlab_file(matlab_file: Path, var_name: str) -> np.ndarray:
@@ -37,7 +39,7 @@ def kde_or_hist_line(data: np.ndarray, bins: np.ndarray):
 
     counts, edges = np.histogram(data, bins=bins, density=True)
     centers = (edges[:-1] + edges[1:]) / 2
-    smooth = np.convolve(counts, SMOOTHING_KERNEL, mode="same")  # 5-point binomial smoothing kernel (Gaussian-like fallback)
+    smooth = np.convolve(counts, SMOOTHING_KERNEL, mode="same")  # Normalized 5-point binomial kernel (Gaussian-like fallback)
     return centers, smooth
 
 
@@ -52,7 +54,7 @@ def main() -> None:
 
     bp = ax1.boxplot(
         [data1, data2],
-        tick_labels=["Schedule 1", "SOS"],
+        tick_labels=[SCHEDULE1_LABEL, SCHEDULE2_LABEL],
         whis=1.5,
         widths=0.7,
         patch_artist=True,
@@ -115,7 +117,7 @@ def main() -> None:
         alpha=0.7,
         linewidth=1.0,
         density=True,
-        label="Schedule 1",
+        label=SCHEDULE1_LABEL,
     )
     ax2.hist(
         data2,
@@ -125,7 +127,7 @@ def main() -> None:
         alpha=0.7,
         linewidth=1.0,
         density=True,
-        label="SOS",
+        label=SCHEDULE2_LABEL,
     )
 
     x1, y1 = kde_or_hist_line(data1, bin_edges)
