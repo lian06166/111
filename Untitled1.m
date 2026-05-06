@@ -83,7 +83,11 @@ if exist('histogram', 'builtin') || exist('histogram', 'file')
               'Normalization', 'pdf');
 else
     [counts1, centers1] = hist(data1, bin_centers);
-    bin_width1 = centers1(2) - centers1(1);
+    if numel(centers1) > 1
+        bin_width1 = centers1(2) - centers1(1);
+    else
+        bin_width1 = 1;
+    end
     counts1 = counts1 / (sum(counts1) * bin_width1);
     bar(centers1, counts1, 1, ...
         'FaceColor', [0.8 0.2 0.2], ...
@@ -102,7 +106,11 @@ if exist('histogram', 'builtin') || exist('histogram', 'file')
               'Normalization', 'pdf');
 else
     [counts2, centers2] = hist(data2, bin_centers);
-    bin_width2 = centers2(2) - centers2(1);
+    if numel(centers2) > 1
+        bin_width2 = centers2(2) - centers2(1);
+    else
+        bin_width2 = 1;
+    end
     counts2 = counts2 / (sum(counts2) * bin_width2);
     bar(centers2, counts2, 1, ...
         'FaceColor', [0.2 0.4 0.8], ...
@@ -117,8 +125,16 @@ if exist('ksdensity', 'builtin') || exist('ksdensity', 'file')
 else
     [f1, xi1] = hist(data1, bin_centers);
     [f2, xi2] = hist(data2, bin_centers);
-    dx1 = xi1(2) - xi1(1);
-    dx2 = xi2(2) - xi2(1);
+    if numel(xi1) > 1
+        dx1 = xi1(2) - xi1(1);
+    else
+        dx1 = 1;
+    end
+    if numel(xi2) > 1
+        dx2 = xi2(2) - xi2(1);
+    else
+        dx2 = 1;
+    end
     f1 = f1 / (sum(f1) * dx1);
     f2 = f2 / (sum(f2) * dx2);
     smooth_kernel = [1, 4, 6, 4, 1];
