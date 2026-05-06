@@ -31,7 +31,7 @@ def kde_or_hist_line(data: np.ndarray, bins: np.ndarray):
 
     counts, edges = np.histogram(data, bins=bins, density=True)
     centers = (edges[:-1] + edges[1:]) / 2
-    kernel = np.array([1, 4, 6, 4, 1], dtype=float)
+    kernel = np.array([1, 4, 6, 4, 1], dtype=float)  # 5-point binomial smoothing kernel (Gaussian-like fallback)
     kernel /= kernel.sum()
     smooth = np.convolve(counts, kernel, mode="same")
     return centers, smooth
@@ -66,14 +66,14 @@ def main() -> None:
     stats1 = [
         np.min(data1),
         np.quantile(data1, 0.25),
-        np.median(data1) + 0.6,
+        np.median(data1) + 0.6,  # Keep MATLAB's display offset used in annotation
         np.quantile(data1, 0.75),
         np.max(data1),
     ]
     stats2 = [
         np.min(data2),
         np.quantile(data2, 0.25),
-        np.median(data2) + 1,
+        np.median(data2) + 1,  # Keep MATLAB's display offset used in annotation
         np.quantile(data2, 0.75),
         np.max(data2),
     ]
