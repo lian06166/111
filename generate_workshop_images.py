@@ -7,14 +7,16 @@ import matplotlib.patches as mpatches
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import numpy as np
 
-BASE_DIR = '/home/runner/work/111/111'
-OUTPUT_PATH = f'{BASE_DIR}/workshop_comparison.png'
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+OUTPUT_PATH = BASE_DIR / 'workshop_comparison.png'
 
 ICON_PATHS = {
-    'M1': f'{BASE_DIR}/machine_M1.png',
-    'M2': f'{BASE_DIR}/machine_M2.png',
-    'M3': f'{BASE_DIR}/machine_M3.png',
-    'M4': f'{BASE_DIR}/machine_M4.png',
+    'M1': BASE_DIR / 'machine_M1.png',
+    'M2': BASE_DIR / 'machine_M2.png',
+    'M3': BASE_DIR / 'machine_M3.png',
+    'M4': BASE_DIR / 'machine_M4.png',
 }
 
 JOB_COLORS = {
@@ -193,7 +195,7 @@ def draw_comparison(machine_icons):
     fig.tight_layout(rect=[0, 0.06, 1, 0.94])
     fig.savefig(OUTPUT_PATH, dpi=180, bbox_inches='tight')
     plt.close(fig)
-    print(f'✅ {OUTPUT_PATH} 已保存')
+    print(f'✅ Saved: {OUTPUT_PATH}')
 
 
 def main():
