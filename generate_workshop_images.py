@@ -191,7 +191,7 @@ def draw_comparison(machine_icons):
     ]
     fig.legend(handles=legend_handles, loc='lower center', ncol=4, frameon=False, fontsize=10)
 
-    fig.suptitle('Workshop Process Comparison (2D): Flow Shop vs Flexible Job Shop', fontsize=16, fontweight='bold')
+    fig.suptitle('Flow Shop vs Flexible Job Shop Process Comparison (2D)', fontsize=16, fontweight='bold')
     fig.tight_layout(rect=[0, 0.06, 1, 0.94])
     fig.savefig(OUTPUT_PATH, dpi=180, bbox_inches='tight')
     plt.close(fig)
@@ -203,7 +203,6 @@ def main():
     create_machine_icons()
     machine_icons = {m: plt.imread(p) for m, p in ICON_PATHS.items()}
     draw_comparison(machine_icons)
-    print('2D comparison simulation image generated.')
 
 
 if __name__ == '__main__':
