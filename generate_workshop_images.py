@@ -1,15 +1,20 @@
-"""生成3D流水车间与作业车间仿真对比图（机器使用具体图片贴图）"""
+"""生成2D车间流程对比图：流水车间 vs 柔性作业车间（单张PNG）"""
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import numpy as np
 
+BASE_DIR = '/home/runner/work/111/111'
+OUTPUT_PATH = f'{BASE_DIR}/workshop_comparison.png'
+
 ICON_PATHS = {
-    'M1': '/home/runner/work/111/111/machine_M1.png',
-    'M2': '/home/runner/work/111/111/machine_M2.png',
-    'M3': '/home/runner/work/111/111/machine_M3.png',
-    'M4': '/home/runner/work/111/111/machine_M4.png',
+    'M1': f'{BASE_DIR}/machine_M1.png',
+    'M2': f'{BASE_DIR}/machine_M2.png',
+    'M3': f'{BASE_DIR}/machine_M3.png',
+    'M4': f'{BASE_DIR}/machine_M4.png',
 }
 
 JOB_COLORS = {
@@ -28,47 +33,33 @@ def configure_fonts():
 
 
 def create_machine_icon(path, base_color, machine_name):
-    """生成简易机器图标PNG（透明背景）"""
-    h, w = 240, 240
+    h, w = 220, 220
     img = np.zeros((h, w, 4), dtype=float)
 
-    # 机身
-    img[60:200, 35:205, :3] = np.array(base_color)
-    img[60:200, 35:205, 3] = 1.0
+    img[56:184, 32:188, :3] = np.array(base_color)
+    img[56:184, 32:188, 3] = 1.0
 
-    # 高亮面
-    img[72:125, 48:150, :3] = 0.85
-    img[72:125, 48:150, 3] = 1.0
+    img[68:118, 44:138, :3] = 0.86
+    img[68:118, 44:138, 3] = 1.0
 
-    # 面板
-    img[135:187, 60:180, :3] = np.array([0.15, 0.2, 0.28])
-    img[135:187, 60:180, 3] = 1.0
+    img[124:172, 56:166, :3] = np.array([0.14, 0.20, 0.28])
+    img[124:172, 56:166, 3] = 1.0
 
-    # 指示灯
-    img[145:160, 72:87, :3] = np.array([0.95, 0.2, 0.2])
-    img[145:160, 72:87, 3] = 1.0
-    img[145:160, 94:109, :3] = np.array([0.95, 0.8, 0.2])
-    img[145:160, 94:109, 3] = 1.0
-    img[145:160, 116:131, :3] = np.array([0.2, 0.85, 0.3])
-    img[145:160, 116:131, 3] = 1.0
+    img[136:150, 68:82, :3] = np.array([0.95, 0.2, 0.2])
+    img[136:150, 68:82, 3] = 1.0
+    img[136:150, 89:103, :3] = np.array([0.95, 0.8, 0.2])
+    img[136:150, 89:103, 3] = 1.0
+    img[136:150, 110:124, :3] = np.array([0.2, 0.85, 0.3])
+    img[136:150, 110:124, 3] = 1.0
 
-    # 传送带底座
-    img[198:220, 22:218, :3] = np.array([0.22, 0.25, 0.3])
-    img[198:220, 22:218, 3] = 1.0
+    img[182:204, 20:200, :3] = np.array([0.22, 0.25, 0.3])
+    img[182:204, 20:200, 3] = 1.0
 
-    # 机器编号条
-    img[20:50, 65:175, :3] = np.array([0.08, 0.12, 0.18])
-    img[20:50, 65:175, 3] = 0.95
-
-    plt.imsave(path, img)
-
-    # 单独写编号，避免直接绘制数组文字复杂化
-    fig = plt.figure(figsize=(2.4, 2.4), dpi=100)
+    fig = plt.figure(figsize=(2.2, 2.2), dpi=100)
     ax = fig.add_axes([0, 0, 1, 1])
     ax.imshow(img)
     ax.axis('off')
-    ax.text(120, 35, machine_name, color='white', fontsize=16, fontweight='bold',
-            ha='center', va='center')
+    ax.text(110, 34, machine_name, color='white', fontsize=16, fontweight='bold', ha='center', va='center')
     fig.savefig(path, transparent=True)
     plt.close(fig)
 
@@ -80,46 +71,51 @@ def create_machine_icons():
         'M3': (0.95, 0.63, 0.17),
         'M4': (0.61, 0.35, 0.71),
     }
-    for m, p in ICON_PATHS.items():
-        create_machine_icon(p, color_map[m], m)
+    for machine, path in ICON_PATHS.items():
+        create_machine_icon(path, color_map[machine], machine)
 
 
-def add_icon_billboard(ax, icon, x, y, z, width=2.0, height=2.4):
-    """在3D坐标中放置带贴图的机器图片平面"""
-    if icon.dtype != float:
-        icon = icon.astype(float) / 255.0
-    ny, nx = icon.shape[0], icon.shape[1]
-
-    u = np.linspace(-width / 2, width / 2, nx)
-    v = np.linspace(0, height, ny)
-    U, V = np.meshgrid(u, v)
-
-    X = x + U
-    Y = np.full_like(U, y)
-    Z = z + V
-
-    ax.plot_surface(X, Y, Z, rstride=1, cstride=1, facecolors=icon, shade=False, zorder=5)
+def add_machine_image(ax, machine_icons, machine, x, y, label):
+    image = OffsetImage(machine_icons[machine], zoom=0.26)
+    ab = AnnotationBbox(image, (x, y), frameon=False, box_alignment=(0.5, 0.5), zorder=4)
+    ax.add_artist(ab)
+    ax.text(x, y - 0.95, label, ha='center', va='top', fontsize=10, fontweight='bold', color='#2C3E50')
 
 
-def draw_floor(ax, xlim, ylim):
-    xx = np.linspace(xlim[0], xlim[1], 20)
-    yy = np.linspace(ylim[0], ylim[1], 20)
-    X, Y = np.meshgrid(xx, yy)
-    Z = np.zeros_like(X)
-    ax.plot_surface(X, Y, Z, alpha=0.13, color='#7F8C8D', linewidth=0)
+def draw_job_routes(ax, machine_positions, routes, job_y_jitter):
+    for job, route in routes.items():
+        color = JOB_COLORS[job]
+        xs = [machine_positions[m][0] for m in route]
+        ys = [machine_positions[m][1] + job_y_jitter[job] for m in route]
+        ax.plot(xs, ys, color=color, lw=2.5, marker='o', ms=4, zorder=3)
+
+        for i in range(len(xs) - 1):
+            ax.annotate(
+                '',
+                xy=(xs[i + 1], ys[i + 1]),
+                xytext=(xs[i], ys[i]),
+                arrowprops=dict(arrowstyle='->', color=color, lw=2),
+                zorder=3,
+            )
 
 
-def draw_flow_shop_3d(machine_icons):
-    fig = plt.figure(figsize=(13, 8))
-    ax = fig.add_subplot(111, projection='3d')
+def draw_flow_panel(ax, machine_icons):
+    ax.set_title('Flow Shop', fontsize=13, fontweight='bold', color='#1F4E79')
+    ax.set_xlim(0, 16)
+    ax.set_ylim(0, 9)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_facecolor('#F7FAFD')
 
-    machine_pos = {'M1': (0, 0), 'M2': (4, 0), 'M3': (8, 0), 'M4': (12, 0)}
+    machine_positions = {
+        'M1': (2.2, 5.0),
+        'M2': (6.0, 5.0),
+        'M3': (9.8, 5.0),
+        'M4': (13.6, 5.0),
+    }
 
-    draw_floor(ax, (-2, 14), (-3, 3))
-
-    for m, (mx, my) in machine_pos.items():
-        add_icon_billboard(ax, machine_icons[m], mx, my, 0)
-        ax.text(mx, my, 2.75, m, ha='center', va='bottom', fontsize=10, fontweight='bold')
+    for m, (x, y) in machine_positions.items():
+        add_machine_image(ax, machine_icons, m, x, y, m)
 
     routes = {
         'J1': ['M1', 'M2', 'M3', 'M4'],
@@ -127,42 +123,37 @@ def draw_flow_shop_3d(machine_icons):
         'J3': ['M1', 'M2', 'M3', 'M4'],
         'J4': ['M1', 'M2', 'M3', 'M4'],
     }
-    y_offsets = {'J1': -1.2, 'J2': -0.4, 'J3': 0.4, 'J4': 1.2}
+    y_jitter = {'J1': -1.2, 'J2': -0.6, 'J3': 0.0, 'J4': 0.6}
+    draw_job_routes(ax, machine_positions, routes, y_jitter)
 
-    for j, route in routes.items():
-        pts = np.array([[machine_pos[m][0], y_offsets[j], 0.65] for m in route])
-        ax.plot(pts[:, 0], pts[:, 1], pts[:, 2], color=JOB_COLORS[j], lw=3, marker='o', ms=5, label=j)
-        for i in range(len(pts) - 1):
-            d = pts[i + 1] - pts[i]
-            ax.quiver(pts[i, 0], pts[i, 1], pts[i, 2], d[0], d[1], d[2],
-                      color=JOB_COLORS[j], arrow_length_ratio=0.15, linewidth=2)
-
-    ax.set_title('Flow Shop 3D Simulation (Same Route)', fontsize=14, fontweight='bold')
-    ax.set_xlim(-2, 14)
-    ax.set_ylim(-3, 3)
-    ax.set_zlim(0, 3.5)
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Height')
-    ax.view_init(elev=26, azim=-59)
-    ax.legend(loc='upper left')
-
-    fig.savefig('/home/runner/work/111/111/flow_shop_3d_simulation.png', dpi=170, bbox_inches='tight')
-    plt.close(fig)
-    print('✅ flow_shop_3d_simulation.png 已保存')
+    ax.text(
+        8.0,
+        1.0,
+        'All jobs share the same route: M1 → M2 → M3 → M4',
+        ha='center',
+        va='center',
+        fontsize=9.5,
+        bbox=dict(facecolor='white', edgecolor='#1F4E79', boxstyle='round,pad=0.3'),
+    )
 
 
-def draw_job_shop_3d(machine_icons):
-    fig = plt.figure(figsize=(13, 8))
-    ax = fig.add_subplot(111, projection='3d')
+def draw_job_shop_panel(ax, machine_icons):
+    ax.set_title('Flexible Job Shop', fontsize=13, fontweight='bold', color='#7A1F7A')
+    ax.set_xlim(0, 16)
+    ax.set_ylim(0, 9)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_facecolor('#FDF7FD')
 
-    machine_pos = {'M1': (0, 0), 'M2': (6, 0), 'M3': (0, 4), 'M4': (6, 4)}
+    machine_positions = {
+        'M1': (4.0, 6.2),
+        'M2': (12.0, 6.2),
+        'M3': (4.0, 3.2),
+        'M4': (12.0, 3.2),
+    }
 
-    draw_floor(ax, (-2, 8), (-2, 6))
-
-    for m, (mx, my) in machine_pos.items():
-        add_icon_billboard(ax, machine_icons[m], mx, my, 0)
-        ax.text(mx, my, 2.75, m, ha='center', va='bottom', fontsize=10, fontweight='bold')
+    for m, (x, y) in machine_positions.items():
+        add_machine_image(ax, machine_icons, m, x, y, m)
 
     routes = {
         'J1': ['M1', 'M3', 'M2', 'M4'],
@@ -170,89 +161,47 @@ def draw_job_shop_3d(machine_icons):
         'J3': ['M3', 'M4', 'M1', 'M2'],
         'J4': ['M4', 'M2', 'M3', 'M1'],
     }
-    z_offsets = {'J1': 0.65, 'J2': 0.8, 'J3': 0.95, 'J4': 1.1}
+    y_jitter = {'J1': 0.22, 'J2': 0.07, 'J3': -0.07, 'J4': -0.22}
+    draw_job_routes(ax, machine_positions, routes, y_jitter)
 
-    for j, route in routes.items():
-        pts = np.array([[machine_pos[m][0], machine_pos[m][1], z_offsets[j]] for m in route])
-        ax.plot(pts[:, 0], pts[:, 1], pts[:, 2], color=JOB_COLORS[j], lw=3, marker='o', ms=5, label=j)
-        for i in range(len(pts) - 1):
-            d = pts[i + 1] - pts[i]
-            ax.quiver(pts[i, 0], pts[i, 1], pts[i, 2], d[0], d[1], d[2],
-                      color=JOB_COLORS[j], arrow_length_ratio=0.15, linewidth=2)
+    ax.text(
+        8.0,
+        1.0,
+        'Each job follows a different route and shares machines dynamically',
+        ha='center',
+        va='center',
+        fontsize=9.5,
+        bbox=dict(facecolor='white', edgecolor='#7A1F7A', boxstyle='round,pad=0.3'),
+    )
 
-    ax.set_title('Job Shop 3D Simulation (Multiple Routes)', fontsize=14, fontweight='bold')
-    ax.set_xlim(-2, 8)
-    ax.set_ylim(-2, 6)
-    ax.set_zlim(0, 3.5)
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Height')
-    ax.view_init(elev=28, azim=-48)
-    ax.legend(loc='upper left')
 
-    fig.savefig('/home/runner/work/111/111/job_shop_3d_simulation.png', dpi=170, bbox_inches='tight')
+def draw_comparison(machine_icons):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8), facecolor='white')
+
+    draw_flow_panel(ax1, machine_icons)
+    draw_job_shop_panel(ax2, machine_icons)
+
+    legend_handles = [
+        mpatches.Patch(color=JOB_COLORS['J1'], label='Job J1'),
+        mpatches.Patch(color=JOB_COLORS['J2'], label='Job J2'),
+        mpatches.Patch(color=JOB_COLORS['J3'], label='Job J3'),
+        mpatches.Patch(color=JOB_COLORS['J4'], label='Job J4'),
+    ]
+    fig.legend(handles=legend_handles, loc='lower center', ncol=4, frameon=False, fontsize=10)
+
+    fig.suptitle('Workshop Process Comparison (2D): Flow Shop vs Flexible Job Shop', fontsize=16, fontweight='bold')
+    fig.tight_layout(rect=[0, 0.06, 1, 0.94])
+    fig.savefig(OUTPUT_PATH, dpi=180, bbox_inches='tight')
     plt.close(fig)
-    print('✅ job_shop_3d_simulation.png 已保存')
-
-
-def draw_comparison_3d(machine_icons):
-    fig = plt.figure(figsize=(18, 8))
-    ax1 = fig.add_subplot(121, projection='3d')
-    ax2 = fig.add_subplot(122, projection='3d')
-
-    # 左侧：Flow Shop
-    flow_pos = {'M1': (0, 0), 'M2': (4, 0), 'M3': (8, 0), 'M4': (12, 0)}
-    draw_floor(ax1, (-2, 14), (-3, 3))
-    for m, (mx, my) in flow_pos.items():
-        add_icon_billboard(ax1, machine_icons[m], mx, my, 0)
-    for j, y0 in {'J1': -0.9, 'J2': 0.0, 'J3': 0.9}.items():
-        pts = np.array([[flow_pos[m][0], y0, 0.75] for m in ['M1', 'M2', 'M3', 'M4']])
-        ax1.plot(pts[:, 0], pts[:, 1], pts[:, 2], color=JOB_COLORS[j], lw=3)
-    ax1.set_title('Flow Shop: Same Route')
-    ax1.set_xlim(-2, 14)
-    ax1.set_ylim(-3, 3)
-    ax1.set_zlim(0, 3.2)
-    ax1.view_init(elev=24, azim=-58)
-
-    # 右侧：Job Shop
-    job_pos = {'M1': (0, 0), 'M2': (6, 0), 'M3': (0, 4), 'M4': (6, 4)}
-    draw_floor(ax2, (-2, 8), (-2, 6))
-    for m, (mx, my) in job_pos.items():
-        add_icon_billboard(ax2, machine_icons[m], mx, my, 0)
-    route_demo = {
-        'J1': ['M1', 'M3', 'M2', 'M4'],
-        'J2': ['M2', 'M1', 'M4', 'M3'],
-        'J3': ['M3', 'M4', 'M1', 'M2'],
-    }
-    for j, route in route_demo.items():
-        pts = np.array([[job_pos[m][0], job_pos[m][1], 0.75] for m in route])
-        ax2.plot(pts[:, 0], pts[:, 1], pts[:, 2], color=JOB_COLORS[j], lw=3)
-    ax2.set_title('Job Shop: Different Routes')
-    ax2.set_xlim(-2, 8)
-    ax2.set_ylim(-2, 6)
-    ax2.set_zlim(0, 3.2)
-    ax2.view_init(elev=26, azim=-45)
-
-    for ax in [ax1, ax2]:
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Height')
-
-    fig.suptitle('3D Workshop Difference Comparison (Machine Image Textures)', fontsize=16, fontweight='bold')
-    fig.savefig('/home/runner/work/111/111/workshop_3d_comparison.png', dpi=170, bbox_inches='tight')
-    plt.close(fig)
-    print('✅ workshop_3d_comparison.png 已保存')
+    print(f'✅ {OUTPUT_PATH} 已保存')
 
 
 def main():
     configure_fonts()
     create_machine_icons()
     machine_icons = {m: plt.imread(p) for m, p in ICON_PATHS.items()}
-
-    draw_flow_shop_3d(machine_icons)
-    draw_job_shop_3d(machine_icons)
-    draw_comparison_3d(machine_icons)
-    print('所有3D仿真图片已生成完毕！')
+    draw_comparison(machine_icons)
+    print('2D comparison simulation image generated.')
 
 
 if __name__ == '__main__':
