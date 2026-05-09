@@ -1,4 +1,4 @@
-"""生成2D车间流程对比图：流水车间 vs 柔性作业车间（单张PNG）"""
+"""Generate a 2D workshop process comparison image (single PNG)."""
 
 import matplotlib
 matplotlib.use('Agg')
@@ -19,6 +19,10 @@ ICON_PATHS = {
     'M4': BASE_DIR / 'machine_M4.png',
 }
 
+
+ICON_SIZE = 220
+MACHINE_ICON_ZOOM = 0.26
+
 JOB_COLORS = {
     'J1': '#E74C3C',
     'J2': '#2ECC71',
@@ -35,7 +39,7 @@ def configure_fonts():
 
 
 def create_machine_icon(path, base_color, machine_name):
-    h, w = 220, 220
+    h, w = ICON_SIZE, ICON_SIZE
     img = np.zeros((h, w, 4), dtype=float)
 
     img[56:184, 32:188, :3] = np.array(base_color)
@@ -78,7 +82,7 @@ def create_machine_icons():
 
 
 def add_machine_image(ax, machine_icons, machine, x, y, label):
-    image = OffsetImage(machine_icons[machine], zoom=0.26)
+    image = OffsetImage(machine_icons[machine], zoom=MACHINE_ICON_ZOOM)
     ab = AnnotationBbox(image, (x, y), frameon=False, box_alignment=(0.5, 0.5), zorder=4)
     ax.add_artist(ab)
     ax.text(x, y - 0.95, label, ha='center', va='top', fontsize=10, fontweight='bold', color='#2C3E50')
